@@ -29,12 +29,14 @@ function Game() {
 }
 
 Game.prototype.initialize = function () {
-  this.setPicturePositions()
-  this.setImage(this.image)
+  this.initPicturePositions()
+  this.initImage()
   this.initEvents()
 }
 
-Game.prototype.setImage = function (img) {
+Game.prototype.initImage = function () {
+  var img = this.image
+
   // set sample picture
   var elPictureSample = this.el.querySelector('.pic-sample')
   elPictureSample.style.backgroundImage = 'url(' + img + ')';
@@ -46,7 +48,7 @@ Game.prototype.setImage = function (img) {
   )
 }
 
-Game.prototype.setPicturePositions = function () {
+Game.prototype.initPicturePositions = function () {
   this.picturePositions.forEach((id, position) => {
     if (typeof id === 'string') {
       this.setPicturePosition(this.getPicture(id), position)
