@@ -7,7 +7,23 @@ const MOVE_ANIMATION_TIME_MS = 500
 
 function Game() {
   this.el = document.querySelector('.view')
-  this.picturePositions = [0,1,2,3,4,5,6,7,8,null]
+  this.picturePositions = ['0','1','2','3','4','5','6','7','8',null]
+  /*
+   * from position 0 to positon 9
+   * each position's surrounding positions(up,right,down,left)
+   */
+  this.__allSurroundingPositions = [
+    [null,1,3,null], // position 0
+    [null,2,4,0],
+    [null,null,5,1],
+    [0,4,6,null],
+    [1,5,7,3],
+    [2,null,8,4],
+    [3,7,null,null],
+    [4,8,null,6],
+    [5,null,9,7],
+    [8,null,null,null]
+  ]
   this.image = 'example.jpg'
   this.initialize()
 }
@@ -15,6 +31,7 @@ function Game() {
 Game.prototype.initialize = function () {
   this.setPicturePositions()
   this.setImage(this.image)
+  this.initEvents()
 }
 
 Game.prototype.setImage = function (img) {
@@ -31,16 +48,36 @@ Game.prototype.setImage = function (img) {
 
 Game.prototype.setPicturePositions = function () {
   this.picturePositions.forEach((id, position) => {
-    if (typeof id === 'number') {
+    if (typeof id === 'string') {
       this.setPicturePosition(this.getPicture(id), position)
     }
   })
+}
+
+Game.prototype.initEvents = function () {
+
+  // click picture then move it to the empty position if possible
+  this.el.addEventListener('click', (e) => {
+    var target = e.target
+    if (target.classList.contains('pic')) {
+      var id = this.getPictureId(target)
+      var currentPosition = this.getPicturePositionById(id)
+      var emptyPosition = this.getEmptyPosition()
+      if (this.isPositionNearBy(currentPosition, emptyPosition)) {
+        this.movePictureTo(id, emptyPosition)
+      }
+    }
+  }, false)
 }
 
 Game.prototype.getPicture = function getPicture(id) {
   return this.el.querySelector('.pic[data-num="' + id + '"]')
 }
 
+/*
+ * @param {string} id - picture id
+ * @param {number} targetPosition
+ */
 Game.prototype.movePictureTo = function (id, targetPosition) {
   var picture = this.getPicture(id)
 
@@ -53,6 +90,22 @@ Game.prototype.movePictureTo = function (id, targetPosition) {
   var currentPosition = this.picturePositions.indexOf(id)
   this.picturePositions[currentPosition] = null
   this.picturePositions[targetPosition] = id
+}
+
+Game.prototype.getPictureId = function (picture) {
+  return picture.dataset['num']
+}
+
+Game.prototype.getPictureIdByPosition = function (position) {
+  return this.picturePositions[position]
+}
+
+Game.prototype.getPicturePositionById = function (id) {
+  return this.picturePositions.indexOf(id)
+}
+
+Game.prototype.getEmptyPosition = function () {
+  return this.picturePositions.indexOf(null)
 }
 
 Game.prototype.setPicturePosition = function (picture, position) {
@@ -70,6 +123,15 @@ Game.prototype.setPicturePosition = function (picture, position) {
 
   picture.style.top  = top
   picture.style.left = left
+}
+
+Game.prototype.getSurroundingPositionsOf = function (position) {
+  return this.__allSurroundingPositions[position]
+}
+
+Game.prototype.isPositionNearBy = function (position1, position2) {
+  var surroundingPositions1 = this.__allSurroundingPositions[position1]
+  return surroundingPositions1 && surroundingPositions1.indexOf(position2) > -1
 }
 
 export default Game

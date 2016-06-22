@@ -94,7 +94,13 @@
 
 	function Game() {
 	  this.el = document.querySelector('.view');
-	  this.picturePositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, null];
+	  this.picturePositions = ['0', '1', '2', '3', '4', '5', '6', '7', '8', null];
+	  /*
+	   * from position 0 to positon 9
+	   * each position's surrounding positions(up,right,down,left)
+	   */
+	  this.__allSurroundingPositions = [[null, 1, 3, null], // position 0
+	  [null, 2, 4, 0], [null, null, 5, 1], [0, 4, 6, null], [1, 5, 7, 3], [2, null, 8, 4], [3, 7, null, null], [4, 8, null, 6], [5, null, 9, 7], [8, null, null, null]];
 	  this.image = 'example.jpg';
 	  this.initialize();
 	}
@@ -102,6 +108,7 @@
 	Game.prototype.initialize = function () {
 	  this.setPicturePositions();
 	  this.setImage(this.image);
+	  this.initEvents();
 	};
 
 	Game.prototype.setImage = function (img) {
@@ -119,16 +126,37 @@
 	  var _this = this;
 
 	  this.picturePositions.forEach(function (id, position) {
-	    if (typeof id === 'number') {
+	    if (typeof id === 'string') {
 	      _this.setPicturePosition(_this.getPicture(id), position);
 	    }
 	  });
+	};
+
+	Game.prototype.initEvents = function () {
+	  var _this2 = this;
+
+	  // click picture then move it to the empty position if possible
+	  this.el.addEventListener('click', function (e) {
+	    var target = e.target;
+	    if (target.classList.contains('pic')) {
+	      var id = _this2.getPictureId(target);
+	      var currentPosition = _this2.getPicturePositionById(id);
+	      var emptyPosition = _this2.getEmptyPosition();
+	      if (_this2.isPositionNearBy(currentPosition, emptyPosition)) {
+	        _this2.movePictureTo(id, emptyPosition);
+	      }
+	    }
+	  }, false);
 	};
 
 	Game.prototype.getPicture = function getPicture(id) {
 	  return this.el.querySelector('.pic[data-num="' + id + '"]');
 	};
 
+	/*
+	 * @param {string} id - picture id
+	 * @param {number} targetPosition
+	 */
 	Game.prototype.movePictureTo = function (id, targetPosition) {
 	  var picture = this.getPicture(id);
 
@@ -143,6 +171,22 @@
 	  var currentPosition = this.picturePositions.indexOf(id);
 	  this.picturePositions[currentPosition] = null;
 	  this.picturePositions[targetPosition] = id;
+	};
+
+	Game.prototype.getPictureId = function (picture) {
+	  return picture.dataset['num'];
+	};
+
+	Game.prototype.getPictureIdByPosition = function (position) {
+	  return this.picturePositions[position];
+	};
+
+	Game.prototype.getPicturePositionById = function (id) {
+	  return this.picturePositions.indexOf(id);
+	};
+
+	Game.prototype.getEmptyPosition = function () {
+	  return this.picturePositions.indexOf(null);
 	};
 
 	Game.prototype.setPicturePosition = function (picture, position) {
@@ -160,6 +204,15 @@
 
 	  picture.style.top = top;
 	  picture.style.left = left;
+	};
+
+	Game.prototype.getSurroundingPositionsOf = function (position) {
+	  return this.__allSurroundingPositions[position];
+	};
+
+	Game.prototype.isPositionNearBy = function (position1, position2) {
+	  var surroundingPositions1 = this.__allSurroundingPositions[position1];
+	  return surroundingPositions1 && surroundingPositions1.indexOf(position2) > -1;
 	};
 
 	exports.default = Game;
@@ -180,16 +233,11 @@
 	  ArrowRight: 3
 	};
 
-	function Controller(app) {
-	  this.app = app;
-	  this.__PicturePositions = app.picturePositions;
-	  /*
-	   * from position 0 to positon 9
-	   * each position's surrounding positions(up,right,down,left)
-	   */
-	  this.__allSurroundingPositions = [[null, 1, 3, null], // position 0
-	  [null, 2, 4, 0], [null, null, 5, 1], [0, 4, 6, null], [1, 5, 7, 3], [2, null, 8, 4], [3, 7, null, null], [4, 8, null, 6], [5, null, 9, 7], [8, null, null, null]];
-
+	/*
+	 * @param {Game} game
+	 */
+	function Controller(game) {
+	  this.game = game;
 	  this.initialize();
 	}
 
@@ -204,25 +252,19 @@
 	  });
 	};
 
+	/*
+	 * @param {number} direction - from direction, [0,1,2,3] <=> [up,right,down,left]
+	 */
 	Controller.prototype.moveFrom = function (direction) {
-	  var toPosition = this.getEmptyPosition();
+	  var toPosition = this.game.getEmptyPosition();
 	  if (toPosition > -1) {
-	    var surroundingPositions = this.getSurroundingPositionsOf(toPosition);
+	    var surroundingPositions = this.game.getSurroundingPositionsOf(toPosition);
 	    var fromPosition = surroundingPositions[direction];
 	    if (fromPosition !== null) {
-	      var pictureId = this.__PicturePositions[fromPosition];
-	      this.app.movePictureTo(pictureId, toPosition);
-	      console.debug('move ' + pictureId + ': ' + fromPosition + ' => ' + toPosition);
+	      var pictureId = this.game.getPictureIdByPosition(fromPosition);
+	      this.game.movePictureTo(pictureId, toPosition);
 	    }
 	  } else console.error('get empty position failed.');
-	};
-
-	Controller.prototype.getEmptyPosition = function () {
-	  return this.__PicturePositions.indexOf(null);
-	};
-
-	Controller.prototype.getSurroundingPositionsOf = function (position) {
-	  return this.__allSurroundingPositions[position];
 	};
 
 	exports.default = Controller;
