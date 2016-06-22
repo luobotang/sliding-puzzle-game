@@ -46,9 +46,7 @@
 
 	'use strict';
 
-	var _app = __webpack_require__(1);
-
-	var _app2 = _interopRequireDefault(_app);
+	__webpack_require__(1);
 
 	var _game = __webpack_require__(5);
 

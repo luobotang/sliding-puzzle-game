@@ -2,7 +2,7 @@
  * https://en.wikipedia.org/wiki/Sliding_puzzle
  */
 
-import __css__ from './app.css'
+import './app.css'
 import Game from './game'
 import Controller from './controller'
 
